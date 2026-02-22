@@ -4,50 +4,21 @@
 
 ## 文件说明
 
-### 完整报告（推荐阅读）
+### 完整报告（唯一推荐）
 
-**[AI_Evaluation_Complete_Report.md](AI_Evaluation_Complete_Report.md)** - 包含所有章节和附录的完整合并文档（10,252 行）
+**[AI_Evaluation_Complete_Report.md](AI_Evaluation_Complete_Report.md)** - 包含所有章节和附录的完整合并文档（306,214 字节，约 10,252 行）
 
-### 分章节阅读
+### 附录
 
-如果您需要按章节阅读，以下是各章节的独立文件：
-
-| 章节 | 标题 | 页数 |
+| 附录 | 文件 | 说明 |
 |------|------|------|
-| 1 | [引言](01-introduction.md) | 2-3 |
-| 2 | [Anthropic 评测框架深度解析](02-anthropic-framework.md) | 4-5 |
-| 3 | [SWE-bench：软件工程 Agent 评测](03-swe-bench.md) | 4-5 |
-| 4 | [WebArena：Web Agent 评测](04-webarena.md) | 4-5 |
-| 5 | [τ-bench：工具使用 Agent 评测](05-tau-bench.md) | 3-4 |
-| 6 | [终端/Shell Agent 评测基准](06-terminal-benchmarks.md) | 3-4 |
-| 7 | [学术研究与文献综述](07-academic-research.md) | 3-4 |
-| 8 | [GitHub 项目与实现模式](08-github-projects.md) | 3-4 |
-| 9 | [实践实施指南](09-practical-guidance.md) | 3-4 |
-| 10 | [代码示例与教程](10-code-examples.md) | 3-4 |
-| 11 | [比较分析与评测基准选择](11-comparative-analysis.md) | 2-3 |
-| 12 | [未来方向](12-future-directions.md) | 2-3 |
-| 13 | [结论](13-conclusion.md) | 1-2 |
-
-## 附录
-
-| 附录 | 标题 | 说明 |
-|------|------|------|
-| A | [安装指南](appendices/a-installation-guides.md) | 基础环境到云部署的完整安装流程 |
-| B | [速查表](appendices/b-cheat-sheets.md) | 评测框架、基准对比、代码片段速查 |
-| C | [额外资源与链接](appendices/c-resources.md) | 官方文档、开源项目、学习资源链接 |
-| D | [示例配置文件](appendices/d-config-examples.md) | 评测、Docker、监控等配置示例 |
-
-## 参考文献
-
-[参考文献](references.md) - 包含所有引用的学术论文、技术文档和在线资源
+| A | `appendices/a-installation-guides.md` | 安装指南 |
 
 ## 快速开始
 
 1. **阅读完整报告**：下载并阅读 `AI_Evaluation_Complete_Report.md`
-2. **选择感兴趣章节**：根据目录跳转到相关章节
-3. **实践代码示例**：参考第 10 章的代码示例和教程
-4. **查阅速查表**：使用附录 B 快速查找常用信息
-5. **获取更多资源**：通过附录 C 链接访问官方文档和项目
+2. **使用目录导航**：通过目录快速跳转到相关章节
+3. **参考附录**：使用附录 A 获取安装指南
 
 ## 报告概览
 
@@ -78,8 +49,8 @@
 
 ## 更新记录
 
-- **2026-02-22**：初始版本创建，包含 13 章和 4 个附录的完整内容
-- 总计：10,252 行，符合 35-40 页的技术报告要求
+- **2026-02-22**：初始版本创建，包含 13 章和 1 个附录的完整内容
+- **2026-02-22**：文档结构简化，合并为单个完整报告文件
 
 ## 生成说明
 
