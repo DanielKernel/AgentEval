@@ -1,173 +1,94 @@
 # AgentEval
 
-A lightweight Python framework for evaluating AI agent responses against configurable criteria.
+轻量级**对话类 Agent** 自动化评测框架，基于 Anthropic《Demystifying evals for AI agents》与项目 `docs` 内解读实现。
 
-## Installation
+## 安装
 
 ```bash
 pip install -e ".[dev]"
 ```
 
-## What's New
+## 快速开始
 
-- Multi-trial evaluation per task (`k` trials)
-- Task-level `pass@k` and `pass^k` metrics
-- Trial transcript and outcome capture
-- End-to-end `EvaluationHarness` for running agent callables
-- CLI support for `length_check` and `regex_match` scoring functions
+### Python API
 
-## Quick Start
+实现 `DialogueAgent` 协议（`run(task) -> Transcript`）即可接入评测：
 
 ```python
-from agent_eval import AgentEvaluator, Criterion, EvalTask
-from agent_eval.evaluator import contains_keywords
-
-# 1. Define criteria
-criteria = [
-    Criterion(
-        name="correctness",
-        description="The answer is factually correct.",
-        weight=2.0,
-        passing_threshold=1.0,
-    ),
-    Criterion(
-        name="mentions_python",
-        description="The answer mentions Python.",
-        weight=1.0,
-        passing_threshold=0.5,
-    ),
-]
-
-# 2. Attach scoring functions
-scoring_fns = {
-    "correctness": lambda output, expected: 1.0 if output.strip() == expected else 0.0,
-    "mentions_python": contains_keywords(["python"]),
-}
-
-# 3. Create evaluator
-evaluator = AgentEvaluator(criteria=criteria, scoring_functions=scoring_fns)
-
-# 4. Evaluate
-task = EvalTask(
-    task_id="q1",
-    input="What language is this framework written in?",
-    expected_output="Python",
+from agent_eval import (
+    ConversationEvalHarness,
+    ConversationTask,
+    StringMatchGrader,
+    MaxTurnsGrader,
 )
-result = evaluator.evaluate(task, "Python")
-print(result.passed)          # True
-print(result.overall_score)   # 1.0
-```
+from agent_eval.conversation.sample_agent import EchoAgent
 
-## Multi-Trial Evaluation
-
-```python
-from agent_eval import AgentEvaluator, Criterion, EvalTask
-
-criteria = [
-    Criterion(name="correctness", description="Exact answer", passing_threshold=1.0),
+tasks = [
+    ConversationTask(
+        task_id="t1",
+        initial_user_message="你好",
+        expected_outcome="你好",
+        max_turns=10,
+    )
 ]
-evaluator = AgentEvaluator(criteria=criteria)
-
-task = EvalTask(task_id="q1", input="2+2?", expected_output="4")
-task_trials = evaluator.evaluate_task_trials(
-    task=task,
-    agent_outputs=["4", "5", "4"],  # k=3 trials
-)
-
-print(task_trials.pass_at_k)   # 1.0 (at least one trial passed)
-print(task_trials.pass_hat_k)  # 0.0 (not all trials passed)
-```
-
-## Harness Usage
-
-```python
-from agent_eval import AgentEvaluator, Criterion, EvalTask, EvaluationHarness
-
-criteria = [Criterion(name="correctness", description="Exact answer", passing_threshold=1.0)]
-evaluator = AgentEvaluator(criteria=criteria)
-
-def agent_runner(task, environment, seed):
-    # Return either a string or a payload dict
-    return {
-        "output": "4",
-        "transcript": [{"step_id": 0, "action": "answer"}],
-        "outcome": {"status": "done"},
-    }
-
-harness = EvaluationHarness(evaluator=evaluator, agent_runner=agent_runner)
-results = harness.run([EvalTask(task_id="t1", input="2+2?", expected_output="4")], n_trials=3)
+graders = [StringMatchGrader(), MaxTurnsGrader(max_turns=10)]
+harness = ConversationEvalHarness(agent=EchoAgent(), graders=graders, n_trials=2)
+results = harness.run_evaluation(tasks)
 print(harness.summary(results))
 ```
 
-## CLI Usage
+### CLI
 
-Create three JSON files:
-
-**config.json**
-```json
-{
-  "criteria": [
-    {
-      "name": "correctness",
-      "description": "Exact match with expected output.",
-      "weight": 1.0,
-      "passing_threshold": 1.0,
-      "scoring_function": "exact_match"
-    },
-    {
-      "name": "format",
-      "description": "Output contains a phone pattern.",
-      "weight": 1.0,
-      "passing_threshold": 1.0,
-      "scoring_function": "regex_match",
-      "pattern": "\\d{3}-\\d{4}",
-      "flags": ["IGNORECASE"]
-    }
-  ]
-}
+```bash
+agent-eval --config examples/conversation_eval/config.json \
+  --tasks examples/conversation_eval/tasks.json \
+  --output results.json
 ```
 
-**tasks.json**
+- **--config**：评测配置 JSON，可包含 **agents**（多个被测 Agent）、graders、n_trials、pass_k_param、seed 等
+- **--tasks**：任务 JSON（task_id、initial_user_message、expected_outcome、max_turns 等）
+- **--output**：可选，结果输出路径（多 Agent 时输出 `agents.<id>.summary/results`）
+- **--agent** / **--fixed-response**：当 config 中未配置 `agents` 时，用作单个内置 Agent（兼容旧用法）
+
+### 配置多个被测 Agent
+
+在 `config.json` 中配置 `agents` 数组即可对接多个对话 Agent，同一套任务与评估器会对每个 Agent 各跑一遍，并输出对比：
+
 ```json
-[
-  {"task_id": "t1", "input": "What is 2+2?", "expected_output": "4"}
+"agents": [
+  { "id": "echo", "type": "echo" },
+  { "id": "fixed_zh", "type": "fixed", "params": { "response": "这是固定回复。" } },
+  { "id": "my_agent", "type": "custom", "module": "my_module.agents", "class": "MyAgent", "params": {} }
 ]
 ```
 
-**outputs.json**
-```json
-[
-  {
-    "outputs": [
-      {"output": "4", "seed": 11},
-      {"output": "4", "seed": 12},
-      {"output": "5", "seed": 13}
-    ]
-  }
-]
-```
+- **内置**：`type: "echo"` 或 `type: "fixed"`，`params` 可选（如 fixed 的 `response`）
+- **自定义**：`type: "custom"`，二选一：`module` + `class`（可选 `params`），或 `callable`（如 `"mymod:create_agent"` 返回带 `run(task)->Transcript` 的对象）
 
-Run the evaluator:
+## 评估器类型
+
+| type | 说明 |
+|------|------|
+| `string_match` | 最后一条助手回复与预期一致（忽略大小写与首尾空白） |
+| `regex` | 助手回复匹配给定正则 |
+| `keyword` | 助手回复包含关键词（可配置 `require_all`） |
+| `max_turns` | 轮次不超过上限（效率） |
+
+可选：`LLMRubricGrader` 通过注入 `judge_fn` 做 LLM-as-Judge。
+
+## 指标
+
+- **pass@k**：n 次试验中随机抽 k 次至少一次成功的概率估计
+- **pass^k**：一致性
+- **overall_pass_rate** / **mean_score**：汇总通过率与加权平均分
+
+## 测试
 
 ```bash
-agent-eval --config config.json --tasks tasks.json --outputs outputs.json --trials 3
+pytest tests/
 ```
 
-Use `--require-all-trials` to make CLI exit non-zero unless every trial passes (`pass^k`).
+## 文档与示例
 
-## Running Tests
-
-```bash
-pytest
-```
-
-## Scoring Functions
-
-| Name | Description |
-|---|---|
-| `exact_match` | Case-insensitive exact string comparison |
-| `contains_keywords` | Fraction of required keywords present |
-| `length_check` | 1.0 if word count is within `[min_words, max_words]` |
-| `regex_match` | 1.0 if output matches a regex pattern |
-
-Custom scoring functions can be passed directly to `AgentEvaluator` via the `scoring_functions` dict.
+- 示例任务与配置：`examples/conversation_eval/`
+- 报告与附录：`docs/AI_Evaluation_Complete_Report.md`、`docs/appendices/`

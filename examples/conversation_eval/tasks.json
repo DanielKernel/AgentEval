@@ -1,0 +1,23 @@
+[
+  {
+    "task_id": "greeting_001",
+    "initial_user_message": "你好，请介绍一下你自己。",
+    "expected_outcome": "你好，请介绍一下你自己。",
+    "max_turns": 10,
+    "metadata": { "category": "greeting" }
+  },
+  {
+    "task_id": "qa_001",
+    "initial_user_message": "1+1 等于几？请只回答数字。",
+    "expected_outcome": "1+1 等于几？请只回答数字。",
+    "max_turns": 5,
+    "metadata": { "category": "math" }
+  },
+  {
+    "task_id": "open_001",
+    "initial_user_message": "请说一句问候语。",
+    "expected_outcome": "请说一句问候语。",
+    "max_turns": 5,
+    "metadata": { "category": "open" }
+  }
+]
