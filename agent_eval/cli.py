@@ -53,9 +53,30 @@ def _build_evaluator(config: Dict[str, Any]) -> AgentEvaluator:
                 )
             scoring_fns[name] = contains_keywords(keywords)
         elif fn_type == "length_check":
+            raw_min_words = c.get("min_words", 0)
+            try:
+                min_words = int(raw_min_words)
+            except (TypeError, ValueError) as exc:
+                raise SystemExit(
+                    f"Criterion '{name}' has invalid min_words value "
+                    f"{raw_min_words!r}: {exc}"
+                ) from exc
+
+            raw_max_words = c.get("max_words")
+            if raw_max_words is None:
+                max_words = None
+            else:
+                try:
+                    max_words = int(raw_max_words)
+                except (TypeError, ValueError) as exc:
+                    raise SystemExit(
+                        f"Criterion '{name}' has invalid max_words value "
+                        f"{raw_max_words!r}: {exc}"
+                    ) from exc
+
             scoring_fns[name] = length_check(
-                min_words=int(c.get("min_words", 0)),
-                max_words=c.get("max_words"),
+                min_words=min_words,
+                max_words=max_words,
             )
         elif fn_type == "regex_match":
             pattern = c.get("pattern")

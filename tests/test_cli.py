@@ -35,6 +35,45 @@ def test_build_evaluator_supports_length_and_regex():
     assert result.overall_score == 1.0
 
 
+def test_build_evaluator_coerces_length_bounds_from_json_scalars():
+    config = {
+        "criteria": [
+            {
+                "name": "length_ok",
+                "description": "Length constraint",
+                "scoring_function": "length_check",
+                "min_words": "2",
+                "max_words": 6.0,
+                "passing_threshold": 1.0,
+            }
+        ]
+    }
+
+    evaluator = _build_evaluator(config)
+    task = EvalTask(task_id="c2", input="prompt")
+
+    in_range = evaluator.evaluate(task, "one two three four five six")
+    too_long = evaluator.evaluate(task, "one two three four five six seven")
+
+    assert in_range.passed is True
+    assert too_long.passed is False
+
+
+def test_build_evaluator_invalid_max_words_raises():
+    config = {
+        "criteria": [
+            {
+                "name": "length_ok",
+                "scoring_function": "length_check",
+                "max_words": "six",
+            }
+        ]
+    }
+
+    with pytest.raises(SystemExit, match="invalid max_words value"):
+        _build_evaluator(config)
+
+
 def test_parse_outputs_single_mode():
     parsed = _parse_outputs(
         outputs_data=[
