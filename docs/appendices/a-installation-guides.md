@@ -321,158 +321,9 @@ pip install pydoc-markdown mkdocs
 pip install docstring-parser
 ```
 
-## A.4 云环境部署
+## A.4 故障排除指南
 
-### A.4.1 AWS 部署
-
-#### EC2 实例配置
-```bash
-# 启动 Ubuntu 22.04 实例
-aws ec2 run-instances \
-    --image-id ami-0c55b159cbfafe1f0 \
-    --instance-type g4dn.xlarge \
-    --key-name your-key-pair \
-    --security-group-ids sg-xxx \
-    --subnet-id subnet-xxx
-
-# 连接到实例
-ssh -i your-key.pem ubuntu@ec2-xx-xx-xx-xx.compute-1.amazonaws.com
-
-# 安装 Docker
-sudo apt-get update
-sudo apt-get install docker.io docker-compose
-sudo usermod -aG docker $USER
-newgrp docker
-
-# 克隆和运行项目
-git clone https://github.com/your-org/agent-eval.git
-cd agent-eval
-docker-compose up -d
-```
-
-#### ECS 配置
-```yaml
-# Dockerfile
-FROM python:3.10-slim
-
-WORKDIR /app
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY . .
-
-CMD ["python", "run_evaluation.py"]
-```
-
-```yaml
-# task-definition.json
-{
-  "family": "agent-eval-task",
-  "networkMode": "awsvpc",
-  "containerDefinitions": [
-    {
-      "name": "agent-eval",
-      "image": "your-ecr-repo/agent-eval:latest",
-      "cpu": 4096,
-      "memory": 8192,
-      "essential": true
-    }
-  ],
-  "requiresCompatibilities": ["FARGATE"],
-  "cpu": "4096",
-  "memory": "8192"
-}
-```
-
-### A.4.2 Google Cloud 部署
-
-#### GCE 实例配置
-```bash
-# 创建实例
-gcloud compute instances create agent-eval-instance \
-    --machine-type=n1-standard-4 \
-    --image-family=ubuntu-2204-lts \
-    --image-project=ubuntu-os-cloud \
-    --boot-disk-size=100GB
-
-# 安装 Docker
-sudo apt-get update
-sudo apt-get install docker.io docker-compose
-sudo usermod -aG docker $USER
-
-# 部署应用
-git clone https://github.com/your-org/agent-eval.git
-cd agent-eval
-docker-compose up -d
-```
-
-#### Cloud Run 部署
-```yaml
-# cloudbuild.yaml
-steps:
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/agent-eval', '.']
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/agent-eval']
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    args:
-      - 'run'
-      - 'deploy'
-      - 'agent-eval-service'
-      - '--image'
-      - 'gcr.io/$PROJECT_ID/agent-eval'
-      - '--platform'
-      - 'managed'
-      - '--region'
-      - 'us-central1'
-      - '--memory'
-      - '4Gi'
-```
-
-### A.4.3 Azure 部署
-
-#### Azure VM 配置
-```bash
-# 创建 VM
-az vm create \
-  --resource-group agent-eval-rg \
-  --name agent-eval-vm \
-  --image Ubuntu2204 \
-  --admin-username azureuser \
-  --generate-ssh-keys \
-  --size Standard_D4s_v3
-
-# 安装 Docker
-ssh azureuser@agent-eval-vm.eastus.cloudapp.azure.com
-sudo apt-get update
-sudo apt-get install docker.io docker-compose
-sudo usermod -aG docker azureuser
-
-# 部署应用
-git clone https://github.com/your-org/agent-eval.git
-cd agent-eval
-docker-compose up -d
-```
-
-#### Azure Container Instances
-```bash
-# 创建容器实例
-az container create \
-  --resource-group agent-eval-rg \
-  --name agent-eval-container \
-  --image your-registry.azurecr.io/agent-eval:latest \
-  --cpu 4 \
-  --memory 8 \
-  --ports 80 \
-  --dns-name-label agent-eval-dns \
-  --registry-username $REGISTRY_USERNAME \
-  --registry-password $REGISTRY_PASSWORD
-```
-
-## A.5 故障排除指南
-
-### A.5.1 常见安装问题
+### A.4.1 常见安装问题
 
 #### Python 包安装失败
 ```bash
@@ -507,7 +358,7 @@ docker run -p 3001:3000 image-name
 docker system prune -a
 ```
 
-### A.5.2 环境配置问题
+### A.4.2 环境配置问题
 
 #### 环境变量设置
 ```bash
@@ -537,7 +388,7 @@ import sys
 sys.path.insert(0, '/path/to/your/project')
 ```
 
-### A.5.3 性能优化建议
+### A.4.3 性能优化建议
 
 #### 资源配置优化
 ```yaml
@@ -568,9 +419,9 @@ import joblib
 from functools import lru_cache
 ```
 
-## A.6 验证安装
+## A.5 验证安装
 
-### A.6.1 基本功能验证
+### A.5.1 基本功能验证
 
 #### Python 环境验证
 ```python
@@ -606,7 +457,7 @@ docker-compose --version
 docker run --rm alpine ping -c 3 google.com
 ```
 
-### A.6.2 本项目功能验证
+### A.5.2 本项目功能验证
 
 #### 对话 Agent 评测验证
 ```bash
@@ -637,7 +488,7 @@ python -c "from swebench import get_dataset; print(get_dataset('swe-bench-lite')
 python scripts/run_simple_test.py
 ```
 
-### A.6.3 性能基准测试（可选）
+### A.5.3 性能基准测试（可选）
 
 以下为可选性能测试，非本项目默认验证内容。
 
@@ -668,9 +519,9 @@ process = psutil.Process(os.getpid())
 print(f"Memory after allocation: {process.memory_info().rss / 1024 / 1024:.2f} MB")
 ```
 
-## A.7 后续步骤
+## A.6 后续步骤
 
-### A.7.1 学习资源
+### A.6.1 学习资源
 
 #### 本仓库文档
 - **完整报告**：`docs/AI_Evaluation_Complete_Report.md`（含《Demystifying evals for AI agents》解读）
@@ -687,7 +538,7 @@ print(f"Memory after allocation: {process.memory_info().rss / 1024 / 1024:.2f} M
 - **Jupyter notebooks**: 交互式学习示例
 - **视频教程**: YouTube 上的相关频道
 
-### A.7.2 社区支持
+### A.6.2 社区支持
 
 #### 讨论渠道
 - **GitHub Issues**: 报告问题和功能请求
@@ -701,7 +552,7 @@ print(f"Memory after allocation: {process.memory_info().rss / 1024 / 1024:.2f} M
 3. 从简单的 bug 修复开始
 4. 参与讨论和代码审查
 
-### A.7.3 扩展学习
+### A.6.3 扩展学习
 
 #### 进阶主题
 1. **自定义评测环境开发**
@@ -722,3 +573,4 @@ print(f"Memory after allocation: {process.memory_info().rss / 1024 / 1024:.2f} M
 - 技术要求与 `pyproject.toml` 一致：Python 3.9+，无强制外部依赖。
 - A.2 为外部评测框架参考，非本项目运行所必需。
 - 本仓库仅支持对话类 Agent 评测，详见附录 B。
+- 本评测当前仅面向本地/内网环境，不涉及云环境部署。
