@@ -5,11 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "agent-eval"
 version = "0.1.0"
-description = "A lightweight framework for evaluating AI agent responses."
+description = "A lightweight framework for evaluating conversation/dialogue AI agents (Demystifying evals for AI agents)."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-keywords = ["agent", "evaluation", "llm", "ai"]
+keywords = ["agent", "evaluation", "conversation", "dialogue", "evals", "llm"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",

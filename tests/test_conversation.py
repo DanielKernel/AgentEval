@@ -165,3 +165,37 @@ def test_harness_fixed_agent_fail():
     r = results[0]
     assert r.n_passed == 0
     assert r.pass_at_1 == 0.0
+
+
+# ---------------------------------------------------------------------------
+# Agent factory
+# ---------------------------------------------------------------------------
+
+def test_build_agent_echo():
+    from agent_eval.conversation.agent_factory import build_agent
+    agent = build_agent({"id": "e", "type": "echo"})
+    assert hasattr(agent, "run")
+    task = ConversationTask("t", "hi", expected_outcome="hi", max_turns=5)
+    t = agent.run(task)
+    assert t.get_last_assistant_turn() == "hi"
+
+
+def test_build_agent_fixed():
+    from agent_eval.conversation.agent_factory import build_agent
+    agent = build_agent({"id": "f", "type": "fixed", "params": {"response": "R"}})
+    task = ConversationTask("t", "hi", max_turns=5)
+    t = agent.run(task)
+    assert t.get_last_assistant_turn() == "R"
+
+
+def test_build_agents_multiple():
+    from agent_eval.conversation.agent_factory import build_agents
+    agents = build_agents([
+        {"id": "a1", "type": "echo"},
+        {"id": "a2", "type": "fixed", "params": {"response": "X"}},
+    ])
+    assert len(agents) == 2
+    assert "a1" in agents and "a2" in agents
+    task = ConversationTask("t", "q", max_turns=5)
+    assert agents["a1"].run(task).get_last_assistant_turn() == "q"
+    assert agents["a2"].run(task).get_last_assistant_turn() == "X"

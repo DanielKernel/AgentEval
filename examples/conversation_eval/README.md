@@ -11,10 +11,13 @@
 
 ## 快速运行
 
-在项目根目录执行：
+在项目根目录执行（任选其一）：
 
 ```bash
-cd examples/conversation_eval
+# 使用 CLI
+agent-eval --tasks tasks.json --config config.json --output results.json
+
+# 或使用本目录脚本
 python run_conversation_eval.py --tasks tasks.json --config config.json --output results.json
 ```
 
@@ -41,7 +44,14 @@ class MyAgent:
 ## 配置文件说明
 
 - **tasks.json**：每个任务含 `task_id`、`initial_user_message`、可选 `expected_outcome`、`max_turns`、`metadata`。
-- **config.json**：`n_trials`、`pass_k_param`、`seed`，以及 `graders` 列表（`type`: string_match | regex | keyword | max_turns，及对应参数）。
+- **config.json**：
+  - **agents**（推荐）：数组，每项为被测 Agent 配置，支持多个。
+    - `id`：唯一标识，用于输出与对比。
+    - `type`：`echo` | `fixed` | `custom`。
+    - `params`：可选，传给 Agent 构造或 callable。
+    - 自定义 Agent：`type: "custom"` 时需配 `module`+`class` 或 `callable`（如 `"mymod:create_agent"`）。
+  - **graders**：评估器列表（`type`: string_match | regex | keyword | max_turns 及对应参数）。
+  - **n_trials**、**pass_k_param**、**seed**：试验次数与随机种子。
 
 ## 参考
 

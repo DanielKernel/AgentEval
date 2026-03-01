@@ -1,7 +1,34 @@
-"""AgentEval – a lightweight framework for evaluating AI agent responses."""
+"""AgentEval – 对话类 Agent 自动化评测（基于 Demystifying evals for AI agents）。"""
 
-from agent_eval.models import Criterion, EvalTask, EvalResult
-from agent_eval.evaluator import AgentEvaluator
+from agent_eval.conversation import (
+    ConversationEvalHarness,
+    ConversationTask,
+    DialogueAgent,
+    GradingResult,
+    Grader,
+    KeywordGrader,
+    LLMRubricGrader,
+    MaxTurnsGrader,
+    RegexGrader,
+    StringMatchGrader,
+    Transcript,
+    TrialResult,
+    Turn,
+)
 
-__all__ = ["Criterion", "EvalTask", "EvalResult", "AgentEvaluator"]
+__all__ = [
+    "ConversationEvalHarness",
+    "ConversationTask",
+    "DialogueAgent",
+    "GradingResult",
+    "Grader",
+    "KeywordGrader",
+    "LLMRubricGrader",
+    "MaxTurnsGrader",
+    "RegexGrader",
+    "StringMatchGrader",
+    "Transcript",
+    "TrialResult",
+    "Turn",
+]
 __version__ = "0.1.0"

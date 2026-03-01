@@ -1,5 +1,60 @@
 # 附录 A：安装指南
 
+本文档与《Demystifying evals for AI agents》解读报告一致，面向 AI Agent 评测实践。首先说明**本项目 AgentEval** 的安装与验证，再提供可选的外部评测框架参考。
+
+## A.0 本项目 AgentEval 安装与验证
+
+### A.0.1 安装
+
+```bash
+# 克隆本仓库
+git clone https://github.com/your-org/AgentEval.git
+cd AgentEval
+
+# 创建虚拟环境（推荐）
+python3 -m venv .venv
+source .venv/bin/activate   # Linux/macOS
+# .venv\Scripts\activate   # Windows
+
+# 可编辑模式安装
+pip install -e .
+
+# 开发与测试依赖（可选）
+pip install -e ".[dev]"
+```
+
+### A.0.2 验证安装
+
+```bash
+# 运行对话评测单元测试
+python3 -m pytest tests/ -v
+```
+
+### A.0.3 快速运行：对话 Agent 评测
+
+与《Demystifying evals for AI agents》中**对话 Agent 评估策略**一致（Task / Trial / Transcript / Grader / Harness、pass@k、pass^k）。
+
+**CLI：**
+
+```bash
+agent-eval --config examples/conversation_eval/config.json \
+  --tasks examples/conversation_eval/tasks.json \
+  --output results.json
+```
+
+**或使用示例脚本：**
+
+```bash
+python3 examples/conversation_eval/run_conversation_eval.py \
+  --tasks examples/conversation_eval/tasks.json \
+  --config examples/conversation_eval/config.json \
+  --output results.json
+```
+
+详细说明见 [附录 B：对话 Agent 评测说明](b-conversation-agent-eval.md)。
+
+---
+
 ## A.1 基础环境安装
 
 ### A.1.1 系统要求检查
@@ -20,11 +75,8 @@ Get-PSDrive C | Select-Object Used, Free
 
 #### 软件要求
 ```bash
-# 检查 Python 版本
-python3 --version  # 需要 3.8 或更高版本
-
-# 检查 Docker 安装
-docker --version  # 需要 Docker 20.10 或更高版本
+# 检查 Python 版本（本项目要求 3.9+，与 pyproject.toml 一致）
+python3 --version  # 需要 3.9 或更高版本
 
 # 检查 Git 安装
 git --version
@@ -32,6 +84,8 @@ git --version
 # 检查包管理器
 pip --version  # 或 pip3 --version
 ```
+
+> Docker 为可选，仅在使用外部评测框架（如 SWE-bench、WebArena）或容器化部署时需要。
 
 ### A.1.2 Python 环境配置
 
@@ -53,26 +107,26 @@ conda activate agent-eval-env
 ```
 
 #### 安装基础依赖
+
+本项目 **AgentEval** 核心无额外运行时依赖（`pyproject.toml` 中 `dependencies = []`）。若仅运行单轮评测与对话评测示例，无需安装下列库。
+
+以下为**可选**依赖，适用于扩展开发或与外部基准对接：
+
 ```bash
 # 升级 pip
 pip install --upgrade pip
 
-# 安装基础科学计算库
-pip install numpy pandas scipy scikit-learn
+# 可选：科学计算与数据分析
+pip install numpy pandas
 
-# 安装机器学习框架
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-# 如果有 GPU，使用对应的 CUDA 版本
-
-# 安装深度学习工具
-pip install transformers datasets accelerate
-
-# 安装 Web 和网络工具
-pip install requests beautifulsoup4 selenium playwright
-playwright install  # 安装浏览器驱动
+# 可选：对接外部基准或自建 LLM Judge 时
+# pip install torch transformers  # 按需
+# pip install openai anthropic   # 若使用 API 型 judge_fn
 ```
 
-## A.2 主要评测框架安装
+## A.2 外部评测框架安装（参考）
+
+以下为《Demystifying evals for AI agents》报告中提到的**外部**评测基准/框架，非本项目运行所必需。需要复现报告中的基准实验时可参考安装。
 
 ### A.2.1 AgentBench 安装
 
@@ -206,31 +260,21 @@ export ANTHROPIC_API_KEY="your-anthropic-api-key"
 
 #### VS Code 配置
 ```json
-// .vscode/settings.json
+// .vscode/settings.json（本项目包名为 agent_eval，无 src 目录时可去掉 extraPaths）
 {
-    "python.defaultInterpreterPath": "./agent-eval-env/bin/python",
-    "python.analysis.extraPaths": ["./src"],
+    "python.defaultInterpreterPath": "./.venv/bin/python",
+    "python.analysis.extraPaths": ["."],
     "python.testing.pytestEnabled": true,
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestArgs": [
-        "tests",
-        "-v",
-        "--cov=src",
-        "--cov-report=html"
-    ],
-    "editor.formatOnSave": true,
-    "python.formatting.provider": "black",
-    "python.linting.enabled": true,
-    "python.linting.pylintEnabled": true
+    "python.testing.pytestArgs": ["tests", "-v"],
+    "editor.formatOnSave": true
 }
 ```
 
 #### PyCharm 配置
 1. 打开项目，选择 "Open"
-2. 配置 Python 解释器：File → Settings → Project → Python Interpreter
-3. 添加虚拟环境路径：`./agent-eval-env/bin/python`
-4. 配置运行配置：Run → Edit Configurations
-5. 添加 pytest 配置，设置工作目录和参数
+2. 配置 Python 解释器：File → Settings → Project → Python Interpreter，选择 `.venv` 或 `agent-eval-env`
+3. 配置运行配置：Run → Edit Configurations，添加 pytest，工作目录为项目根目录
 
 ### A.3.2 开发工具安装
 
@@ -562,16 +606,26 @@ docker-compose --version
 docker run --rm alpine ping -c 3 google.com
 ```
 
-### A.6.2 框架功能验证
+### A.6.2 本项目功能验证
 
-#### AgentBench 验证
+#### 对话 Agent 评测验证
+```bash
+# 方式一：CLI
+agent-eval --config examples/conversation_eval/config.json \
+  --tasks examples/conversation_eval/tasks.json
+# 预期：overall_pass_rate 等汇总输出
+
+# 方式二：示例脚本
+python3 examples/conversation_eval/run_conversation_eval.py \
+  --tasks examples/conversation_eval/tasks.json \
+  --config examples/conversation_eval/config.json
+```
+
+#### 外部框架验证（可选）
 ```bash
 # 运行测试套件
 cd AgentBench
 pytest tests/ -v
-
-# 运行示例评测
-python examples/run_basic_evaluation.py
 ```
 
 #### SWE-bench 验证
@@ -583,7 +637,9 @@ python -c "from swebench import get_dataset; print(get_dataset('swe-bench-lite')
 python scripts/run_simple_test.py
 ```
 
-### A.6.3 性能基准测试
+### A.6.3 性能基准测试（可选）
+
+以下为可选性能测试，非本项目默认验证内容。
 
 #### 系统性能测试
 ```bash
@@ -616,7 +672,11 @@ print(f"Memory after allocation: {process.memory_info().rss / 1024 / 1024:.2f} M
 
 ### A.7.1 学习资源
 
-#### 官方文档
+#### 本仓库文档
+- **完整报告**：`docs/AI_Evaluation_Complete_Report.md`（含《Demystifying evals for AI agents》解读）
+- **对话 Agent 评测**：`docs/appendices/b-conversation-agent-eval.md`、`examples/conversation_eval/README.md`
+
+#### 外部基准与框架
 - **AgentBench**: https://agentbench.readthedocs.io/
 - **SWE-bench**: https://swebench.github.io/
 - **WebArena**: https://webarena.dev/
@@ -658,9 +718,7 @@ print(f"Memory after allocation: {process.memory_info().rss / 1024 / 1024:.2f} M
 ---
 
 **安装指南要点总结**：
-- 提供了从基础环境到云部署的完整安装流程
-- 涵盖了主要评测框架的详细安装步骤
-- 包含开发环境配置和性能优化建议
-- 提供了故障排除和验证方法
-- 列出了学习资源和后续步骤建议
-- 强调环境一致性和可重复性的重要性
+- **A.0** 说明本项目 AgentEval 的安装、验证及**对话 Agent 评测**的快速运行（CLI 与示例脚本）。
+- 技术要求与 `pyproject.toml` 一致：Python 3.9+，无强制外部依赖。
+- A.2 为外部评测框架参考，非本项目运行所必需。
+- 本仓库仅支持对话类 Agent 评测，详见附录 B。

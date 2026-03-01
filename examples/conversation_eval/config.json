@@ -2,11 +2,24 @@
   "n_trials": 3,
   "pass_k_param": 3,
   "seed": 42,
+  "agents": [
+    {
+      "id": "echo",
+      "type": "echo"
+    },
+    {
+      "id": "fixed_zh",
+      "type": "fixed",
+      "params": {
+        "response": "这是固定回复。"
+      }
+    }
+  ],
   "graders": [
     {
       "type": "string_match",
       "name": "correctness",
-      "weight": 1.0
+      "weight": 1
     },
     {
       "type": "max_turns",
