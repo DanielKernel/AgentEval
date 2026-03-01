@@ -8,6 +8,14 @@ A lightweight Python framework for evaluating AI agent responses against configu
 pip install -e ".[dev]"
 ```
 
+## What's New
+
+- Multi-trial evaluation per task (`k` trials)
+- Task-level `pass@k` and `pass^k` metrics
+- Trial transcript and outcome capture
+- End-to-end `EvaluationHarness` for running agent callables
+- CLI support for `length_check` and `regex_match` scoring functions
+
 ## Quick Start
 
 ```python
@@ -50,6 +58,47 @@ print(result.passed)          # True
 print(result.overall_score)   # 1.0
 ```
 
+## Multi-Trial Evaluation
+
+```python
+from agent_eval import AgentEvaluator, Criterion, EvalTask
+
+criteria = [
+    Criterion(name="correctness", description="Exact answer", passing_threshold=1.0),
+]
+evaluator = AgentEvaluator(criteria=criteria)
+
+task = EvalTask(task_id="q1", input="2+2?", expected_output="4")
+task_trials = evaluator.evaluate_task_trials(
+    task=task,
+    agent_outputs=["4", "5", "4"],  # k=3 trials
+)
+
+print(task_trials.pass_at_k)   # 1.0 (at least one trial passed)
+print(task_trials.pass_hat_k)  # 0.0 (not all trials passed)
+```
+
+## Harness Usage
+
+```python
+from agent_eval import AgentEvaluator, Criterion, EvalTask, EvaluationHarness
+
+criteria = [Criterion(name="correctness", description="Exact answer", passing_threshold=1.0)]
+evaluator = AgentEvaluator(criteria=criteria)
+
+def agent_runner(task, environment, seed):
+    # Return either a string or a payload dict
+    return {
+        "output": "4",
+        "transcript": [{"step_id": 0, "action": "answer"}],
+        "outcome": {"status": "done"},
+    }
+
+harness = EvaluationHarness(evaluator=evaluator, agent_runner=agent_runner)
+results = harness.run([EvalTask(task_id="t1", input="2+2?", expected_output="4")], n_trials=3)
+print(harness.summary(results))
+```
+
 ## CLI Usage
 
 Create three JSON files:
@@ -64,6 +113,15 @@ Create three JSON files:
       "weight": 1.0,
       "passing_threshold": 1.0,
       "scoring_function": "exact_match"
+    },
+    {
+      "name": "format",
+      "description": "Output contains a phone pattern.",
+      "weight": 1.0,
+      "passing_threshold": 1.0,
+      "scoring_function": "regex_match",
+      "pattern": "\\d{3}-\\d{4}",
+      "flags": ["IGNORECASE"]
     }
   ]
 }
@@ -79,15 +137,23 @@ Create three JSON files:
 **outputs.json**
 ```json
 [
-  {"output": "4"}
+  {
+    "outputs": [
+      {"output": "4", "seed": 11},
+      {"output": "4", "seed": 12},
+      {"output": "5", "seed": 13}
+    ]
+  }
 ]
 ```
 
 Run the evaluator:
 
 ```bash
-agent-eval --config config.json --tasks tasks.json --outputs outputs.json
+agent-eval --config config.json --tasks tasks.json --outputs outputs.json --trials 3
 ```
+
+Use `--require-all-trials` to make CLI exit non-zero unless every trial passes (`pass^k`).
 
 ## Running Tests
 

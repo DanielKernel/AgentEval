@@ -107,3 +107,112 @@ class EvalResult:
                 for cs in self.criterion_scores
             ],
         }
+
+
+@dataclass
+class TranscriptStep:
+    """One step of an agent interaction transcript."""
+
+    step_id: int
+    action: str = ""
+    observation: str = ""
+    tool_name: Optional[str] = None
+    tool_input: Dict[str, Any] = field(default_factory=dict)
+    tool_output: Any = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return a JSON-serialisable representation of the transcript step."""
+        return {
+            "step_id": self.step_id,
+            "action": self.action,
+            "observation": self.observation,
+            "tool_name": self.tool_name,
+            "tool_input": self.tool_input,
+            "tool_output": self.tool_output,
+            "metadata": self.metadata,
+        }
+
+
+@dataclass
+class TrialResult:
+    """Result for one trial of a task."""
+
+    trial_index: int
+    seed: Optional[int]
+    eval_result: EvalResult
+    transcript: List[TranscriptStep] = field(default_factory=list)
+    outcome: Optional[Dict[str, Any]] = None
+    error: str = ""
+
+    @property
+    def passed(self) -> bool:
+        """Whether this trial passed and did not raise runtime errors."""
+        return self.eval_result.passed and not self.error
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return a JSON-serialisable representation of the trial result."""
+        return {
+            "trial_index": self.trial_index,
+            "seed": self.seed,
+            "passed": self.passed,
+            "error": self.error,
+            "outcome": self.outcome,
+            "transcript": [step.to_dict() for step in self.transcript],
+            "eval_result": self.eval_result.to_dict(),
+        }
+
+
+@dataclass
+class TaskTrialResult:
+    """Aggregated result of multiple trials for one task."""
+
+    task: EvalTask
+    trials: List[TrialResult]
+
+    def __post_init__(self) -> None:
+        if not self.trials:
+            raise ValueError("TaskTrialResult requires at least one trial")
+
+    @property
+    def k(self) -> int:
+        """Number of trials for this task."""
+        return len(self.trials)
+
+    @property
+    def pass_at_k(self) -> float:
+        """Empirical pass@k for this task."""
+        return 1.0 if any(trial.passed for trial in self.trials) else 0.0
+
+    @property
+    def pass_hat_k(self) -> float:
+        """Empirical pass^k for this task (all trials must pass)."""
+        return 1.0 if all(trial.passed for trial in self.trials) else 0.0
+
+    @property
+    def trial_pass_rate(self) -> float:
+        """Fraction of successful trials."""
+        return sum(1 for trial in self.trials if trial.passed) / self.k
+
+    @property
+    def mean_overall_score(self) -> float:
+        """Mean overall score across all trials."""
+        return sum(trial.eval_result.overall_score for trial in self.trials) / self.k
+
+    @property
+    def best_overall_score(self) -> float:
+        """Best overall score across trials."""
+        return max(trial.eval_result.overall_score for trial in self.trials)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return a JSON-serialisable representation of the task-level trial result."""
+        return {
+            "task_id": self.task.task_id,
+            "k": self.k,
+            "pass_at_k": self.pass_at_k,
+            "pass_hat_k": self.pass_hat_k,
+            "trial_pass_rate": self.trial_pass_rate,
+            "mean_overall_score": self.mean_overall_score,
+            "best_overall_score": self.best_overall_score,
+            "trials": [trial.to_dict() for trial in self.trials],
+        }
