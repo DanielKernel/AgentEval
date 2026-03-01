@@ -95,6 +95,39 @@ agent-eval --config config.json --tasks tasks.json --outputs outputs.json
 pytest
 ```
 
+## 对话类 Agent 自动化评测
+
+对**任意对话类 Agent** 进行多轮评测（基于 Anthropic《Demystifying evals for AI agents》与 `docs` 内解读）：
+
+- 实现 `DialogueAgent` 协议（`run(task) -> Transcript`）即可接入。
+- 支持代码评估器（字符串/正则/关键词/轮次上限）与可选 LLM-as-Judge。
+- 支持 **pass@k**、**pass^k** 及加权平均分。
+
+```python
+from agent_eval.conversation import (
+    ConversationEvalHarness,
+    ConversationTask,
+    StringMatchGrader,
+    MaxTurnsGrader,
+)
+from agent_eval.conversation.sample_agent import EchoAgent
+
+tasks = [
+    ConversationTask(
+        task_id="t1",
+        initial_user_message="你好",
+        expected_outcome="你好",
+        max_turns=10,
+    )
+]
+graders = [StringMatchGrader(), MaxTurnsGrader(max_turns=10)]
+harness = ConversationEvalHarness(agent=EchoAgent(), graders=graders, n_trials=2)
+results = harness.run_evaluation(tasks)
+print(harness.summary(results))
+```
+
+示例与配置见 `examples/conversation_eval/`。
+
 ## Scoring Functions
 
 | Name | Description |

@@ -1,0 +1,18 @@
+{
+  "n_trials": 3,
+  "pass_k_param": 3,
+  "seed": 42,
+  "graders": [
+    {
+      "type": "string_match",
+      "name": "correctness",
+      "weight": 1.0
+    },
+    {
+      "type": "max_turns",
+      "name": "efficiency",
+      "max_turns": 10,
+      "weight": 0.5
+    }
+  ]
+}
