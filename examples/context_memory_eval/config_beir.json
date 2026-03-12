@@ -1,0 +1,23 @@
+{
+  "benchmark": "beir",
+  "dataset": "nfcorpus",
+  "split": "test",
+  "max_samples": 100,
+  "eval_mode": "offline",
+  "service": {
+    "base_url": "http://localhost:8080",
+    "endpoints": {
+      "retrieve": "/api/v1/context/retrieve"
+    },
+    "headers": {
+      "Authorization": "Bearer YOUR_TOKEN"
+    },
+    "timeout": 30
+  },
+  "grader": {
+    "k": 10,
+    "ndcg_threshold": 0.3,
+    "recall_threshold": 0.5,
+    "mrr_threshold": 0.3
+  }
+}

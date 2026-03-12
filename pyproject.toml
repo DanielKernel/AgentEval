@@ -9,7 +9,7 @@ description = "A lightweight framework for evaluating conversation/dialogue AI a
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-keywords = ["agent", "evaluation", "conversation", "dialogue", "evals", "llm"]
+keywords = ["agent", "evaluation", "conversation", "dialogue", "evals", "llm", "context", "memory", "rag", "benchmark"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -22,6 +22,12 @@ agent-eval = "agent_eval.cli:main"
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0"]
+retrieval = ["beir>=2.0", "sentence-transformers>=2.0"]
+datasets = ["datasets>=2.0", "huggingface_hub>=0.20"]
+all = ["beir>=2.0", "sentence-transformers>=2.0", "datasets>=2.0", "huggingface_hub>=0.20"]
+
+[project.entry-points."openclaw.plugins"]
+context_memory_eval = "agent_eval.plugins.openclaw:ContextMemoryEvalPlugin"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

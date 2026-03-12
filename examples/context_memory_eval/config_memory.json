@@ -1,0 +1,24 @@
+{
+  "benchmark": "longmemeval",
+  "split": "test",
+  "max_samples": 50,
+  "eval_mode": "offline",
+  "task_types": ["qa", "temporal", "update", "abstention"],
+  "service": {
+    "base_url": "http://localhost:8080",
+    "endpoints": {
+      "store_memory": "/api/v1/memory/store",
+      "query_memory": "/api/v1/memory/query"
+    },
+    "headers": {
+      "Authorization": "Bearer YOUR_TOKEN"
+    },
+    "timeout": 60
+  },
+  "grader": {
+    "qa_threshold": 0.5,
+    "temporal_threshold": 0.5,
+    "update_threshold": 0.5,
+    "enable_llm_judge": false
+  }
+}
